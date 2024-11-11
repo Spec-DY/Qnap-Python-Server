@@ -35,18 +35,32 @@ def get_qnap_stats():
 @app.route('/api/qnap_status/systemstatus', methods=['GET'])
 def get_systemstatus():
     
-    if (session):
-        qnap = QNAPStats(host=session['ip'], port=session['port'], username=session['username'], password=session['password'])
+    ip = request.args.get('IP')
+    port = request.args.get('port')
+    username = request.args.get('username')
+    password = request.args.get('password')
     
+    if not ip or not port or not username or not password:
+        return jsonify({'error': 'Missing necessary parameters'}), 400
     
     try:
+        qnap = QNAPStats(host=ip, port=port, username=username, password=password)
         system_stats = qnap.get_system_stats()
-        cpu_info = system_stats['cpu'], system_stats['memory']
-        print(f"get status sucess session :{session}")
-        return jsonify(cpu_info), 200
+        system_health= qnap.get_system_health()
+        
+        # so it displays like: 'heath':'good'
+        health_info = {'health': system_health}
+        
+        disk_info = qnap.get_smart_disk_health()
+        response = {
+            'cpu': system_stats['cpu'],
+            'ram': system_stats['memory'],
+            'health': health_info,
+            'disk_info': disk_info
+        }
+        return jsonify(response), 200
     except Exception as e:
-        print(f"get status failed session :{session}")
-        return jsonify({'error': str(e)}), 501
+        return jsonify({'error': str(e)}), 500
         
 
 
