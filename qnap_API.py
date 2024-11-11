@@ -47,16 +47,22 @@ def get_systemstatus():
         qnap = QNAPStats(host=ip, port=port, username=username, password=password)
         system_stats = qnap.get_system_stats()
         system_health= qnap.get_system_health()
+        disk_info = qnap.get_smart_disk_health()
         
         # so it displays like: 'heath':'good'
         health_info = {'health': system_health}
         
-        disk_info = qnap.get_smart_disk_health()
+        # convert "0:2" disk number
+        processed_disk_info = {}
+        for index, (key, value) in enumerate(disk_info.items(), start=1):
+            processed_disk_info[str(index)] = value
+        
+        
         response = {
             'cpu': system_stats['cpu'],
             'ram': system_stats['memory'],
             'health': health_info,
-            'disk_info': disk_info
+            'disk_info': processed_disk_info
         }
         return jsonify(response), 200
     except Exception as e:
